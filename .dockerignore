@@ -1,0 +1,13 @@
+# git
+.git
+
+# Docker files
+.dockerignore
+Dockerfile
+compose.yml
+
+# secrets
+api_key
+
+# node
+node_modules

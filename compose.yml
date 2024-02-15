@@ -1,0 +1,66 @@
+name: real-time-flights-ingestion
+
+services:
+  web-server:
+    image: rtfi/web-server:latest
+    container_name: web-server
+    secrets:
+      - source: api-key
+        target: api_key # mounted to /run/secrets/api_key
+    ports:
+      - 49153:49153
+    depends_on:
+      kafka:
+        condition: service_healthy
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: kafka
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_MESSAGE_MAX_BYTES=20000000
+      # Kraft config (Kafka as Controller, no Zookeeper)
+      - KAFKA_KRAFT_CLUSTER_ID=8HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,INTERNAL://kafka:9094
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_BROKER_ID=0
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    volumes:
+      - kafka-db:/bitnami/kafka/
+    healthcheck:
+      test: kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:v0.7.1
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=8HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9094
+    ports:
+      - 8080:8080
+    depends_on:
+      - kafka
+  client-api:
+    container_name: client-api
+    build:
+      context: ./
+      args:
+        - PORT=5555
+    ports:
+      - 5555:5555
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  kafka-db:
+
+secrets:
+  api-key:
+    file: ./api_key

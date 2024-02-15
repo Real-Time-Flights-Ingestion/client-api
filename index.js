@@ -6,6 +6,7 @@ import { logger, responseTime } from "./app/middleware.js"
 
 const koa = new Koa()
 const router = new Router()
+const port = process.env.PORT || 3000
 
 koa.use(logger)
 koa.use(responseTime)
@@ -17,4 +18,4 @@ router.get("/hello", (ctx, next) => {
 koa.use(router.routes())
 koa.use(router.allowedMethods())
 
-koa.listen(3000)
+koa.listen(port)
