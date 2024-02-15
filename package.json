@@ -1,0 +1,23 @@
+{
+  "name": "client-api",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Real-Time-Flights-Ingestion",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Real-Time-Flights-Ingestion/client-api.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Real-Time-Flights-Ingestion/client-api/issues"
+  },
+  "homepage": "https://github.com/Real-Time-Flights-Ingestion/client-api#readme",
+  "dependencies": {
+    "koa": "^2.15.0"
+  }
+}
