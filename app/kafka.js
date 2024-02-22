@@ -1,10 +1,11 @@
 "use strict"
 
 import { Kafka } from "kafkajs"
+import settings from "./settings.js"
 
 const kafkaClient = new Kafka({
-    clientId: "client-api",
-    brokers: ["kafka:9092"]
+    clientId: settings.kafka.clientId,
+    brokers: settings.kafka.brokers,
 })
 
 const admin = kafkaClient.admin() // to fetch metadata, offset in particular

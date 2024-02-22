@@ -1,9 +1,10 @@
 "use strict"
 
 import { consume, getLastMessages } from "./kafka.js"
+import settings from "./settings.js"
 
-function airportIcaoToTopic(icao) {
-    return "rtfi.airport." + icao.toLowerCase()
+export function airportIcaoToTopic(icao) {
+    return settings.kafka.topicPrefix + "airport." + icao.toLowerCase()
 }
 
 export function consumeFlights(airportIcao, consumerGroup, callback, lookBack = 0) {

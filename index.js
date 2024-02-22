@@ -3,12 +3,14 @@
 import stream from "node:stream"
 import Koa from "koa"
 import Router from "koa-router"
+import settings from "./app/settings.js"
 import { logger, responseTime } from "./app/middleware.js"
 import { getLatestFlights, consumeFlights } from "./app/flights.js"
 
 const koa = new Koa()
-const router = new Router()
-const port = process.env.PORT || 3000
+const router = new Router({
+    strict: !settings.server.trailingSlashNormalization
+})
 
 koa.use(logger)
 koa.use(responseTime)
@@ -64,4 +66,4 @@ router.get("/hello", async ctx => {
 koa.use(router.routes())
 koa.use(router.allowedMethods())
 
-koa.listen(port)
+koa.listen(settings.server.port)
