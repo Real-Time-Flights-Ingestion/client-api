@@ -53,7 +53,7 @@ async function getOffsets(topic) {
 export async function consume(topic, consumerGroup, callback, lookBack = 0, startOffset = null) {
     // create consumer
     const consumer = kafkaClient.consumer({
-        groupId: "client-api-" + consumerGroup
+        groupId: settings.kafka.consumerGroupPrefix + consumerGroup
     })
     // prepare to seek back messages if needed
     // startOffset has precedence over lookBack

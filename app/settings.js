@@ -10,9 +10,10 @@ const settings_setup = {
         trailingSlashNormalization: true,
     },
     kafka: {
-        clientId: "web-server",
+        clientId: "client-api",
         brokers: ["kafka:9092"],
-        topicPrefix: "rtfi."
+        topicPrefix: "rtfi.",
+        consumerGroupPrefix: "client-api-"
     }
 }
 
