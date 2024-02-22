@@ -71,7 +71,8 @@ export async function consume(topic, consumerGroup, callback, lookBack = 0, star
     // subscribe and await confirmation
     await consumer.subscribe({topics: [topic]})
     // launch message listener
-    consumer.run({
+    // await just awaits for the connection to be successful
+    await consumer.run({
         eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
             console.log("MESSAGE:", message)
             callback({
@@ -100,7 +101,14 @@ export async function consume(topic, consumerGroup, callback, lookBack = 0, star
 export async function getLastMessages(topic, consumerGroup, lookBack = 30, timeoutMs = 10000) {
     return new Promise(async (resolve, reject) => {
         const messages = []
-        const offsets = await getOffsets(topic)
+        var offsets
+        try {
+            offsets = await getOffsets(topic)
+        } catch (error) {
+            reject(error)
+            // reject does not terminate promise execution
+            return
+        }
         if (offsets[0].high == 0) {
             // topic is empty
             resolve(messages)
