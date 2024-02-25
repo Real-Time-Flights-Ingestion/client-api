@@ -51,7 +51,7 @@ router.get("/airport/:icao/flights", async ctx => {
                 sseStream.on("close", () => disconnect())
             } catch (error) {
                 console.error("consumeFlights error", error)
-                if (error.cause.type === "UNKNOWN_TOPIC_OR_PARTITION") {
+                if (error?.type === "UNKNOWN_TOPIC_OR_PARTITION") {
                     console.log("(Kafka not found error)")
                     ctx.status = 404
                     ctx.body = "not found"
@@ -68,7 +68,7 @@ router.get("/airport/:icao/flights", async ctx => {
                 ctx.body = JSON.stringify(flights)
             } catch (error) {
                 console.error("getLatestFlights error", error)
-                if (error.cause.type === "UNKNOWN_TOPIC_OR_PARTITION") {
+                if (error?.cause?.type === "UNKNOWN_TOPIC_OR_PARTITION") {
                     console.log("(Kafka not found error)")
                     ctx.status = 404
                     ctx.body = "not found"
