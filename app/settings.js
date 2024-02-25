@@ -15,6 +15,8 @@ const settings_setup = {
         topicPrefix: "rtfi.",
         consumerGroupPrefix: "client-api-",
         defaultConsumerGroup: "realtime", // client-api-realtime
+        defaultCache: 30,
+        defaultPermanentListeners: ["rtfi.airport.ellx"]
     },
 }
 

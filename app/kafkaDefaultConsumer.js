@@ -10,9 +10,14 @@ const defaultConsumers = {
     // something like
     // "rtifi.airport.ellx": {
     //     consumer: Kafka.Consumer,
+    //     cache: [message_t, message_t-1, ..., message_t-(defaultCache-1)]
     //     subscribers: Set[callbackFuncSubscriber1, callbackFuncSubscriber2],
     // },
     // ...
+}
+
+for (const topic of settings.kafka.defaultPermanentListeners) {
+    realtimeSubscribe(topic, obj => null)
 }
 
 async function subscribeNewTopic(topic) {
@@ -25,7 +30,8 @@ async function subscribeNewTopic(topic) {
         })
         defaultConsumers[topic] = {
             consumer: realtimeConsumer,
-            subscribers: new Set()
+            cache: [],
+            subscribers: new Set(),
         }
         try {
             await realtimeConsumer.connect()
@@ -42,22 +48,31 @@ async function subscribeNewTopic(topic) {
                 autoCommit: true,
                 autoCommitInterval: 3000,
                 eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
-                    console.log("MESSAGE (realtimeConsumer):", message)
+                    const obj = {
+                        topic: topic,
+                        partition: partition,
+                        key: message.key.toString(),
+                        value: message.value.toString(),
+                        headers: iHeadersToStringObj(message.headers),
+                        timestamp: message.timestamp,
+                        attributes: message.attributes,
+                        offset: message.offset,
+                        size: message.size,
+                        disconnect: () => realtimeUnsubscribe(topic, callbackFunc),
+                    }
+                    console.log("MESSAGE obj (realtimeConsumer):", obj)
                     if (defaultConsumers[topic]) {
                         if (defaultConsumers[topic].subscribers) {
+                            // forward
                             for (const callbackFunc of defaultConsumers[topic].subscribers) {
-                                callbackFunc({
-                                    topic: topic,
-                                    partition: partition,
-                                    key: message.key.toString(),
-                                    value: message.value.toString(),
-                                    headers: iHeadersToStringObj(message.headers),
-                                    timestamp: message.timestamp,
-                                    attributes: message.attributes,
-                                    offset: message.offset,
-                                    size: message.size,
-                                    disconnect: () => realtimeUnsubscribe(topic, callbackFunc),
-                                })
+                                callbackFunc(obj)
+                            }
+                            // cache
+                            if (settings.kafka.defaultCache > 0) {
+                                while (defaultConsumers[topic].cache.length >= settings.kafka.defaultCache) {
+                                    defaultConsumers[topic].cache.shift()
+                                }
+                                defaultConsumers[topic].cache.push(obj)
                             }
                         } else {
                             console.warn("received message of topic with null subscribers")
@@ -120,6 +135,29 @@ export async function realtimeUnsubscribe(topic, callback) {
         console.log("now " + topic + " has " + defaultConsumers[topic].subscribers.size + " subscriptions")
         if (defaultConsumers[topic].subscribers.size <= 0) {
             await unsubscribeActiveTopic(topic)
+        }
+    }
+}
+
+export function cacheGet(topic, n = settings.kafka.defaultCache, allowLess = false) {
+    if (!defaultConsumers[topic]) {
+        throw new Error("Topic is not currently tracked")
+    } else if (n <= 0) {
+        throw new Error("Asked an invalid number of messages")
+    } else if (n > settings.kafka.defaultCache ) {
+        throw new Error("Asked a number of messages greater than cache capacity")
+    } else {
+        if (defaultConsumers[topic].cache) {
+            // slice does not throw an error if second argument is greater than length
+            // it just returns as may values as possible
+            const values = defaultConsumers[topic].cache.slice(0, n)
+            if (allowLess || values.length === n) {
+                return values
+            } else {
+                throw new Error("Cache is not full enough yet")
+            }
+        } else {
+            throw new Error("Cannot find the cache, this should not happen")
         }
     }
 }
