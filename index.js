@@ -5,6 +5,8 @@ import apiRouter from "./app/api.js"
 import settings from "./app/settings.js"
 import { logger, responseTime } from "./app/middleware.js"
 
+console.log("[startup] settings:", settings)
+
 const koa = new Koa()
 
 koa.use(logger)
