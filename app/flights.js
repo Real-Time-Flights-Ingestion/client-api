@@ -12,7 +12,7 @@ export function consumeFlights(airportIcao, consumerGroup, callback, lookBack = 
     return consume(airportIcaoToTopic(airportIcao), consumerGroup, callback, lookBack)
 }
 
-export async function getLatestFlights(airportIcao, consumerGroup, lookBack = 30, timeoutMs = 5000) {
+export async function getLatestFlights(airportIcao, consumerGroup, lookBack = 30, timeoutMs = 10000) {
     const topic = airportIcaoToTopic(airportIcao)
     var flightMessages = []
     try {

@@ -78,8 +78,7 @@ export async function consume(topic, consumerGroup, callback, lookBack = 0, star
     // await just awaits for the connection to be successful
     await consumer.run({
         eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
-            console.log("MESSAGE:", message)
-            callback({
+            const obj = {
                 topic: topic,
                 partition: partition,
                 key: message.key.toString(),
@@ -91,7 +90,9 @@ export async function consume(topic, consumerGroup, callback, lookBack = 0, star
                 size: message.size,
                 // return function to disconnect also here if disconnection depends on messages
                 disconnect: consumer.disconnect,
-            })
+            }
+            console.log("MESSAGE obj:", obj)
+            callback(obj)
         },
     })
     // seek to message if needed
@@ -120,11 +121,10 @@ export async function getLastMessages(topic, consumerGroup, lookBack = 30, timeo
         const targetOffset = offsets[0].high - 1 // high offset never exists, the last message has high-1 offset
         const startOffset = targetOffset - lookBack // if < 0 is adjusted in consume()
         var end = false // signal end to callback through context
-        const receive = function({key, value, headers, timestamp, offset, disconnect: disconnectFunc}) {
-            console.log("RECEIVED:", key, value, headers, timestamp, offset)
-            messages.push({key, value, headers, timestamp})
-            if (offset >= targetOffset || end) {
-                disconnectFunc()
+        const receive = function(obj) {
+            messages.push(obj)
+            if (end || obj.offset >= targetOffset) {
+                obj.disconnect()
                 resolve(messages)
             }
         }
