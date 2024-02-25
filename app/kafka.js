@@ -1,16 +1,17 @@
 "use strict"
 
-import { Kafka } from "kafkajs"
 import settings from "./settings.js"
+import { Kafka } from "kafkajs"
 
-const kafkaClient = new Kafka({
+export const kafkaClient = new Kafka({
     clientId: settings.kafka.clientId,
     brokers: settings.kafka.brokers,
 })
 
-const admin = kafkaClient.admin() // to fetch metadata, offset in particular
+// to fetch metadata, offset in particular
+const admin = kafkaClient.admin()
 
-function iHeadersToStringObj(IHeaders) {
+export function iHeadersToStringObj(IHeaders) {
     // IHeaders interface (TypeScript):
     //   interface IHeaders {
     //     [key: string]: Buffer | string | (Buffer | string)[] | undefined
@@ -32,7 +33,7 @@ function iHeadersToStringObj(IHeaders) {
     return headers
 }
 
-async function getOffsets(topic) {
+export async function getOffsets(topic) {
     await admin.connect()
     const offsets = await admin.fetchTopicOffsets(topic)
     // something like:
@@ -69,6 +70,8 @@ export async function consume(topic, consumerGroup, callback, lookBack = 0, star
         seekOffset = 0
     }
     console.log("consume() offset:", seekOffset)
+    // connect
+    await consumer.connect()
     // subscribe and await confirmation
     await consumer.subscribe({topics: [topic]})
     // launch message listener

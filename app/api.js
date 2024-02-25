@@ -3,7 +3,7 @@
 import stream from "node:stream"
 import Router from "koa-router"
 import settings from "./settings.js"
-import { getLatestFlights, consumeFlights } from "./flights.js"
+import { getLatestFlights, realtimeFlights } from "./flights.js"
 
 const router = new Router({
     strict: !settings.server.trailingSlashNormalization
@@ -36,7 +36,7 @@ router.get("/airport/:icao/flights", async ctx => {
             ctx.status = 200
             ctx.body = sseStream
             try {
-                const disconnect = await consumeFlights(icao, "test"+Math.random(), (obj) => {
+                const disconnect = await realtimeFlights(icao, (obj) => {
                     if (sseStream.closed || sseStream.destroyed) {
                         obj.disconnect()
                         return

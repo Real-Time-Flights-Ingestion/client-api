@@ -13,8 +13,9 @@ const settings_setup = {
         clientId: "client-api",
         brokers: ["kafka:9092"],
         topicPrefix: "rtfi.",
-        consumerGroupPrefix: "client-api-"
-    }
+        consumerGroupPrefix: "client-api-",
+        defaultConsumerGroup: "realtime", // client-api-realtime
+    },
 }
 
 const settings = deepFreeze(settings_setup)
