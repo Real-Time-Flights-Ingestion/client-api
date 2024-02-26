@@ -116,6 +116,7 @@ services:
       - kafka-1
       - kafka-2
   client-api:
+    image: rtfi/client-api:latest
     container_name: client-api
     build:
       context: ./
