@@ -11,12 +11,12 @@ const settings_setup = {
     },
     kafka: {
         clientId: "client-api",
-        brokers: ["kafka:9092"],
+        brokers: ["kafka-0:9092", "kafka-1:9092", "kafka-2:9092"],
         topicPrefix: "rtfi.",
         consumerGroupPrefix: "client-api-",
         defaultConsumerGroup: "realtime", // client-api-realtime
         defaultCache: 30,
-        defaultPermanentListeners: ["rtfi.airport.ellx"]
+        defaultPermanentListeners: ["rtfi.airport.ellx", "rtfi.airport.lirf", "rtfi.airport.katl"]
     },
 }
 

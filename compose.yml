@@ -10,27 +10,94 @@ services:
     ports:
       - 49153:49153
     depends_on:
-      kafka:
+      kafka-0:
         condition: service_healthy
-  kafka:
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+  kafka-0:
     image: bitnami/kafka:3.6
-    container_name: kafka
+    container_name: kafka-0
     environment:
+      # documentation https://github.com/bitnami/containers/tree/main/bitnami/kafka
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_CFG_MESSAGE_MAX_BYTES=20000000
       # Kraft config (Kafka as Controller, no Zookeeper)
-      - KAFKA_KRAFT_CLUSTER_ID=8HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_KRAFT_CLUSTER_ID=9HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_BROKER_ID=0
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:9094
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,INTERNAL://kafka:9094
-      - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
-      - KAFKA_CFG_BROKER_ID=0
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-0:9092,INTERNAL://kafka-0:9094
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # replication
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=2 # https://stackoverflow.com/questions/56888050/what-exactly-does-transaction-state-log-min-isr-mean
     volumes:
-      - kafka-db:/bitnami/kafka/
+      - kafka-0-db:/bitnami/kafka/
+    healthcheck:
+      test: kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+  kafka-1:
+    image: bitnami/kafka:3.6
+    container_name: kafka-1
+    environment:
+      # documentation https://github.com/bitnami/containers/tree/main/bitnami/kafka
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_MESSAGE_MAX_BYTES=20000000
+      # Kraft config (Kafka as Controller, no Zookeeper)
+      - KAFKA_KRAFT_CLUSTER_ID=9HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_BROKER_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-1:9092,INTERNAL://kafka-1:9094
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # replication
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=2 # https://stackoverflow.com/questions/56888050/what-exactly-does-transaction-state-log-min-isr-mean
+    volumes:
+      - kafka-1-db:/bitnami/kafka/
+    healthcheck:
+      test: kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+  kafka-2:
+    image: bitnami/kafka:3.6
+    container_name: kafka-2
+    environment:
+      # documentation https://github.com/bitnami/containers/tree/main/bitnami/kafka
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_MESSAGE_MAX_BYTES=20000000
+      # Kraft config (Kafka as Controller, no Zookeeper)
+      - KAFKA_KRAFT_CLUSTER_ID=9HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CFG_BROKER_ID=2
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-2:9092,INTERNAL://kafka-2:9094
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # replication
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=2 # https://stackoverflow.com/questions/56888050/what-exactly-does-transaction-state-log-min-isr-mean
+    volumes:
+      - kafka-2-db:/bitnami/kafka/
     healthcheck:
       test: kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
       interval: 1s
@@ -40,12 +107,14 @@ services:
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:v0.7.1
     environment:
-      - KAFKA_CLUSTERS_0_NAME=8HAv1kYQR3i27LYhPoUaNQ
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9094
+      - KAFKA_CLUSTERS_0_NAME=9HAv1kYQR3i27LYhPoUaNQ
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-0:9094
     ports:
       - 8080:8080
     depends_on:
-      - kafka
+      - kafka-0
+      - kafka-1
+      - kafka-2
   client-api:
     container_name: client-api
     build:
@@ -55,11 +124,17 @@ services:
     ports:
       - 5555:5555
     depends_on:
-      kafka:
+      kafka-0:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
         condition: service_healthy
 
 volumes:
-  kafka-db:
+  kafka-0-db:
+  kafka-1-db:
+  kafka-2-db:
 
 secrets:
   api-key:
